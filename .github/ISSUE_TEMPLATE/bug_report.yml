@@ -1,0 +1,27 @@
+name: Bug report
+description: Report a reproducible defect in the simulator or interface.
+title: "bug: "
+labels: [bug]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Description
+      description: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal scenario and seed
+      description: Paste synthetic JSON input only. Never include production data or credentials.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit SHA
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Expected vs actual metrics / trace

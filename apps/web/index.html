@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0b1220" />
+    <meta name="description" content="QueueTwin — deterministic simulations for retries, duplicate delivery and dead-letter queues." />
+    <title>QueueTwin — Message flow simulator</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="module" src="/app.mjs"></script>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar" aria-label="Primary navigation">
+        <a class="brand" href="/" aria-label="QueueTwin home">
+          <svg viewBox="0 0 36 36" aria-hidden="true"><path d="M18 2 32 10 18 18 4 10Z M4 17 18 25 32 17 M4 24 18 32 32 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/></svg>
+          <span>QueueTwin</span>
+        </a>
+        <nav class="side-links">
+          <button type="button" data-view="workspace" class="nav-button"><span class="nav-symbol">▣</span> Workspace</button>
+          <button type="button" data-view="simulator" class="nav-button active" aria-current="page"><span class="nav-symbol">▷</span> Simulator</button>
+          <button type="button" data-view="scenarios" class="nav-button"><span class="nav-symbol">⌘</span> Scenarios</button>
+          <a href="/docs/architecture.md" target="_blank" rel="noopener" class="nav-button"><span class="nav-symbol">▤</span> Documentation</a>
+        </nav>
+        <div class="sidebar-foot">Open source · v0.1.0<br /><span>Local-only simulation</span></div>
+      </aside>
+
+      <main class="main">
+        <header class="page-header">
+          <div>
+            <h1 id="page-title">Message flow simulator</h1>
+            <p id="page-subtitle">Explore retries, duplicates and dead-letter behavior before production.</p>
+          </div>
+          <div class="header-actions" id="header-actions">
+            <button type="button" class="secondary-button" id="load-example"><span aria-hidden="true">▤</span> Load example</button>
+            <button type="button" class="secondary-button" id="reset"><span aria-hidden="true">↻</span> Reset</button>
+          </div>
+        </header>
+
+        <section id="simulator-view" class="dashboard" aria-label="Simulator">
+          <div class="primary-column">
+            <section class="panel topology-panel" aria-labelledby="topology-title">
+              <div class="panel-heading"><h2 id="topology-title">Event topology</h2><span class="panel-caption">Abstract message flow</span></div>
+              <div class="topology" role="img" aria-label="Topic publishes to queue; queue delivers to worker; exhausted retries are sent to dead-letter queue">
+                <svg class="topology-lines" viewBox="0 0 760 330" preserveAspectRatio="none" aria-hidden="true">
+                  <defs><marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7" fill="none" stroke="#dce9f3" stroke-width="1.5" /></marker></defs>
+                  <path d="M292 91 H456" marker-end="url(#arrow)" />
+                  <path d="M575 132 V168 Q575 178 564 178 H194 Q183 178 183 190 V218" marker-end="url(#arrow)" />
+                  <path d="M292 259 H456" marker-end="url(#arrow)" />
+                </svg>
+                <div class="flow-node topic-node"><span class="node-symbol" aria-hidden="true">☷</span><strong>SNS Topic</strong></div>
+                <div class="flow-node queue-node"><span class="node-symbol" aria-hidden="true">▰</span><strong>SQS Queue</strong></div>
+                <div class="flow-node worker-node"><span class="node-symbol" aria-hidden="true">⚙</span><strong>Worker</strong></div>
+                <div class="flow-node dlq-node"><span class="node-symbol" aria-hidden="true">▤</span><strong>DLQ</strong></div>
+                <span class="flow-hint">On exhausted retries</span>
+              </div>
+            </section>
+
+            <section class="panel trace-panel" aria-labelledby="trace-title">
+              <div class="panel-heading"><h2 id="trace-title">Execution trace</h2><span id="trace-count" class="panel-caption">0 events</span></div>
+              <div class="table-scroll">
+                <table><thead><tr><th scope="col">Time</th><th scope="col">Event</th><th scope="col">Outcome</th></tr></thead><tbody id="trace-body"></tbody></table>
+              </div>
+              <button type="button" class="table-more" id="toggle-trace" hidden>Show all events</button>
+            </section>
+          </div>
+
+          <aside class="panel settings-panel" aria-labelledby="settings-title">
+            <h2 id="settings-title">Scenario settings</h2>
+            <form id="simulation-form">
+              <div class="form-field"><label for="messageCount">Initial messages</label>
+                <input id="messageCount" name="messageCount" type="number" min="1" max="1000" required value="10" /></div>
+              <div class="form-field"><label for="maxAttempts">Max attempts</label>
+                <input id="maxAttempts" name="maxAttempts" type="number" min="1" max="10" required value="3" /></div>
+              <div class="form-field"><label for="failureProbability">Failure probability (%)</label>
+                <input id="failureProbability" name="failureProbability" type="number" min="0" max="100" required value="15" /></div>
+              <div class="form-field"><label for="duplicateProbability">Duplicate probability (%)</label>
+                <input id="duplicateProbability" name="duplicateProbability" type="number" min="0" max="100" required value="10" /></div>
+              <div class="form-field"><label for="seed">Random seed</label>
+                <input id="seed" name="seed" type="number" min="0" max="4294967295" required value="42" /></div>
+              <button type="submit" class="run-button"><span aria-hidden="true">▷</span> Run simulation</button>
+              <p class="form-error" id="form-error" role="alert" hidden></p>
+            </form>
+            <div class="metrics" aria-label="Simulation outcomes">
+              <div class="metric"><span class="metric-icon delivered">✓</span><span>Delivered copies</span><strong id="metric-delivered">—</strong></div>
+              <div class="metric"><span class="metric-icon retried">↻</span><span>Retries</span><strong id="metric-retries">—</strong></div>
+              <div class="metric"><span class="metric-icon dead">×</span><span>Dead-lettered</span><strong id="metric-dlq">—</strong></div>
+              <div class="metric-secondary"><span>Unique messages delivered</span><strong id="metric-unique">—</strong></div>
+              <div class="metric-secondary"><span>Duplicate copies created</span><strong id="metric-duplicates">—</strong></div>
+            </div>
+            <p class="model-note">Deterministic conceptual model. No live AWS resources are used.</p>
+          </aside>
+        </section>
+
+        <section id="workspace-view" class="aux-view" hidden aria-label="Workspace overview">
+          <div class="panel aux-panel"><h2>Current workspace</h2><p>Experiment locally without cloud credentials or production traffic.</p><div class="workspace-grid"><div><span>Model</span><strong>Deterministic v0.1</strong></div><div><span>Infrastructure</span><strong>None required</strong></div><div><span>Last run</span><strong id="workspace-summary">Not started</strong></div></div><button type="button" class="secondary-button go-simulator">Open simulator</button></div>
+        </section>
+
+        <section id="scenarios-view" class="aux-view" hidden aria-label="Scenario presets">
+          <div class="panel aux-panel"><h2>Scenario library</h2><p>Load a preset, change parameters, and compare results using the same random seed.</p><div id="scenario-list" class="scenario-list"></div></div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

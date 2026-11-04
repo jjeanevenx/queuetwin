@@ -1,0 +1,8 @@
+{
+  "name": "Retry storm",
+  "messageCount": 20,
+  "maxAttempts": 3,
+  "failureProbability": 70,
+  "duplicateProbability": 25,
+  "seed": 42
+}

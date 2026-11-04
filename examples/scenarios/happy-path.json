@@ -1,0 +1,8 @@
+{
+  "name": "Happy path",
+  "messageCount": 10,
+  "maxAttempts": 3,
+  "failureProbability": 0,
+  "duplicateProbability": 0,
+  "seed": 42
+}
